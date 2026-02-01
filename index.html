@@ -1,1 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Testnet Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #0f172a;
+      color: white;
+      padding-top: 50px;
+    }
+    button {
+      padding: 15px 30px;
+      font-size: 18px;
+      cursor: pointer;
+      border: none;
+      border-radius: 10px;
+      background: #22c55e;
+      color: black;
+    }
+    .box {
+      margin-top: 30px;
+      font-size: 22px;
+    }
+  </style>
+</head>
+<body>
 
+  <h1>🚀 Testnet Click Game</h1>
+  <p>Click to spend Axes</p>
+
+  <button onclick="playGame()">CLICK</button>
+
+  <div class="box">
+    Axes Left: <span id="axes">30</span>
+  </div>
+
+  <script>
+    let axes = 30;
+
+    function playGame() {
+      if (axes > 0) {
+        axes--;
+        document.getElementById("axes").innerText = axes;
+      } else {
+        alert("Axes habis! Come back tomorrow 👀");
+      }
+    }
+  </script>
+
+</body>
+</html>
