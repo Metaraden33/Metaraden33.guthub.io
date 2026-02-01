@@ -1,54 +1,187 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Testnet Game</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background: #0f172a;
-      color: white;
-      padding-top: 50px;
-    }
-    button {
-      padding: 15px 30px;
-      font-size: 18px;
-      cursor: pointer;
-      border: none;
-      border-radius: 10px;
-      background: #22c55e;
-      color: black;
-    }
-    .box {
-      margin-top: 30px;
-      font-size: 22px;
-    }
-  </style>
+    <title>Xran Testnet Game</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; }
+        #game-container { margin: 20px auto; max-width: 600px; }
+        button { margin:5px; padding:8px 15px; font-size:16px; cursor:pointer; }
+        #leaderboard { margin-top:20px; text-align:center; }
+        ol { padding-left: 0; list-style-position: inside; }
+        .gem { width:30px; height:30px; display:inline-block; position:relative; margin:2px; }
+        .gem img { width:100%; height:100%; }
+        .gem span { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:12px; font-weight:bold; color:white; }
+        .xp-fire { font-weight:bold; }
+        li.highlight { background-color:#cce5ff; font-weight:bold; }
+    </style>
 </head>
 <body>
+<div id="game-container">
+    <h1>🚀 Xran Mini Game</h1>
+    <p>XP: <span id="xp">0</span></p>
+    <p>tXRAN: <span id="tXran">0</span></p>
+    <p>Gems Left:</p>
+    <div id="gemsDisplay"></div>
 
-  <h1>🚀 Testnet Click Game</h1>
-  <p>Click to spend Axes</p>
+    <button id="clickBtn">CLICK</button>
+    <button id="dailyBtn">Daily Check-in</button>
+    <button id="faucetWebBtn">Claim Faucet Website</button>
+    <button id="faucetDiscordBtn">Claim Faucet Discord</button>
+    <button id="buyGemsBtn">Buy 5 Gems (tXRAN)</button>
 
-  <button onclick="playGame()">CLICK</button>
+    <div id="leaderboard">
+        <h2>🏆 Leaderboard (Global)</h2>
+        <ol id="leaderboardList"></ol>
+    </div>
+</div>
 
-  <div class="box">
-    Axes Left: <span id="axes">30</span>
-  </div>
+<script>
+    // ==== Persistent Data ====
+    let gems = parseInt(localStorage.getItem("gems")) || 60;
+    let xp = parseInt(localStorage.getItem("xp")) || 0;
+    let tXran = parseInt(localStorage.getItem("tXran")) || 0;
+    let dailyClaimed = localStorage.getItem("dailyClaimed")==="true";
+    let gemsPurchased = parseInt(localStorage.getItem("gemsPurchased")) || 0;
+    const playerName = getPlayerId();
 
-  <script>
-    let axes = 30;
+    const gemsDisplay = document.getElementById("gemsDisplay");
+    const xpDisplay = document.getElementById("xp");
+    const tXranDisplay = document.getElementById("tXran");
+    const clickBtn = document.getElementById("clickBtn");
+    const dailyBtn = document.getElementById("dailyBtn");
+    const faucetWebBtn = document.getElementById("faucetWebBtn");
+    const faucetDiscordBtn = document.getElementById("faucetDiscordBtn");
+    const buyGemsBtn = document.getElementById("buyGemsBtn");
+    const leaderboardList = document.getElementById("leaderboardList");
 
-    function playGame() {
-      if (axes > 0) {
-        axes--;
-        document.getElementById("axes").innerText = axes;
-      } else {
-        alert("Axes habis! Come back tomorrow 👀");
-      }
+    // ==== Mock Global Leaderboard ====
+    let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || {};
+
+    // ==== Helper Functions ====
+    function getPlayerId(){
+        let id = localStorage.getItem("playerId");
+        if(!id){
+            id = prompt("Enter your player name (unique)","Player1");
+            localStorage.setItem("playerId", id);
+        }
+        return id;
     }
-  </script>
 
+    function getXPColor(xp){
+        if(xp < 50) return "orange";
+        if(xp < 100) return "orangered";
+        return "red";
+    }
+
+    function updateXPDisplay(){
+        xpDisplay.innerHTML = `<span class="xp-fire" style="color:${getXPColor(xp)}">🔥 ${xp}</span>`;
+    }
+
+    function updateGemsDisplay(){
+        let html = "";
+        for(let i=0;i<gems;i++){
+            html += `<div class="gem">
+                        <img src="https://cdn-icons-png.flaticon.com/512/616/616408.png"/>
+                        <span>XON</span>
+                     </div>`;
+        }
+        gemsDisplay.innerHTML = html;
+    }
+
+    function updateLeaderboard(){
+        leaderboard[playerName] = {xp: xp};
+        localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
+        let entries = Object.entries(leaderboard).map(([name,data])=>({name:name,xp:data.xp}));
+        entries.sort((a,b)=>b.xp-a.xp);
+        leaderboardList.innerHTML = "";
+        entries.forEach(entry=>{
+            let li = document.createElement("li");
+            li.textContent = entry.name + ": " + entry.xp + " XP";
+            if(entry.name === playerName) li.classList.add("highlight");
+            leaderboardList.appendChild(li);
+        });
+    }
+
+    function updateAllDisplays(){
+        updateXPDisplay();
+        tXranDisplay.textContent = tXran;
+        updateGemsDisplay();
+        updateLeaderboard();
+        updateBuyGemsButton();
+    }
+
+    function updateBuyGemsButton(){
+        buyGemsBtn.disabled = (gems>0 || gemsPurchased>=3 || tXran<5);
+    }
+
+    // ==== Initial Display ====
+    updateAllDisplays();
+
+    // ==== Click Mini-Game ====
+    clickBtn.onclick = ()=>{
+        if(gems>0){
+            gems--;
+            let reward = Math.floor(Math.random()*8)+3; // 3-10 XP
+            xp += reward;
+            alert("You earned "+reward+" XP!");
+            localStorage.setItem("xp", xp);
+            localStorage.setItem("gems", gems);
+            updateAllDisplays();
+        } else alert("No more gems! Buy Gems to continue.");
+    };
+
+    // ==== Daily Check-in ====
+    dailyBtn.onclick = ()=>{
+        if(!dailyClaimed){
+            xp+=20;
+            tXran+=1;
+            dailyClaimed=true;
+            localStorage.setItem("xp", xp);
+            localStorage.setItem("tXran", tXran);
+            localStorage.setItem("dailyClaimed", true);
+            alert("Daily claimed! +20 XP, +1 tXRAN");
+            updateAllDisplays();
+        } else alert("Already claimed today!");
+    };
+
+    // ==== Faucet Buttons ====
+    faucetWebBtn.onclick = ()=>{
+        tXran+=1;
+        localStorage.setItem("tXran", tXran);
+        alert("Faucet Website claimed! +1 tXRAN");
+        updateAllDisplays();
+    };
+    faucetDiscordBtn.onclick = ()=>{
+        tXran+=1;
+        localStorage.setItem("tXran", tXran);
+        alert("Faucet Discord claimed! +1 tXRAN");
+        updateAllDisplays();
+    };
+
+    // ==== Buy Gems ====
+    buyGemsBtn.onclick = ()=>{
+        const price=5;
+        if(tXran>=price && gemsPurchased<3){
+            tXran-=price;
+            gems+=5;
+            gemsPurchased++;
+            localStorage.setItem("tXran", tXran);
+            localStorage.setItem("gems", gems);
+            localStorage.setItem("gemsPurchased", gemsPurchased);
+            alert("Bought 5 Gems! Used "+price+" tXRAN. Purchase "+gemsPurchased+"/3");
+            updateAllDisplays();
+        } else if(gemsPurchased>=3) alert("Maximum 3 purchases reached!");
+        else alert("Not enough tXRAN to buy Gems!");
+    };
+
+    // ==== Daily reset ====
+    const lastClaim=localStorage.getItem("lastClaimTime");
+    const now=new Date().getTime();
+    if(!lastClaim || now-lastClaim>24*60*60*1000){
+        dailyClaimed=false;
+        localStorage.setItem("dailyClaimed", false);
+        localStorage.setItem("lastClaimTime", now);
+    }
+</script>
 </body>
 </html>
