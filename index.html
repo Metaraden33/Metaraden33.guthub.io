@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Xran Testnet Ultimate Game</title>
+<title>Xran Testnet Ultimate Deluxe</title>
 <style>
-body { font-family: 'Segoe UI', sans-serif; background:#f0f2f5; text-align:center; margin:0; padding:0;}
+body { font-family:'Segoe UI',sans-serif; background:#f0f2f5; text-align:center; margin:0; padding:0;}
 #game-container { max-width:700px; margin:30px auto; background:white; padding:25px; border-radius:15px; box-shadow:0 5px 20px rgba(0,0,0,0.2);}
 h1 { margin-bottom:10px; }
 button { margin:5px; padding:10px 20px; font-size:16px; cursor:pointer; border:none; border-radius:8px; background:#007bff; color:white; transition:0.2s; }
 button:hover { background:#0056b3; transform:scale(1.05);}
-#leaderboard { margin-top:25px; text-align:left; }
+#leaderboard { margin-top:25px; text-align:left; max-height:300px; overflow-y:auto; }
 ol { padding-left:20px; }
-.gem { width:35px; height:35px; display:inline-block; position:relative; margin:3px; cursor:pointer; transition:transform 0.2s; }
+.gem { width:40px; height:40px; display:inline-block; position:relative; margin:3px; cursor:pointer; transition:transform 0.2s; }
 .gem img { width:100%; height:100%; }
 .gem span { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:12px; font-weight:bold; color:white; pointer-events:none;}
 .xp-fire { font-weight:bold; display:inline-block; transition:color 0.5s; position:relative; }
@@ -21,12 +21,17 @@ ol { padding-left:20px; }
 li.highlight { background-color:#cce5ff; font-weight:bold; padding:3px 6px; border-radius:5px; margin-bottom:3px; }
 .particle { position:absolute; width:6px; height:6px; border-radius:50%; pointer-events:none; animation:particleAnim 0.8s forwards; }
 @keyframes particleAnim { 0% {opacity:1; transform:translate(0,0) scale(1);} 100% {opacity:0; transform:translate(calc(var(--dx)), calc(var(--dy))) scale(0);} }
+#xpBarContainer { width:100%; background:#ddd; border-radius:10px; height:20px; margin:10px 0; }
+#xpBar { height:100%; width:0%; background:linear-gradient(to right, orange, red); border-radius:10px; transition:width 0.5s; }
+.level-badge { display:inline-block; padding:3px 8px; margin-left:10px; border-radius:5px; background:gold; font-weight:bold; animation:badgePulse 1s infinite alternate; }
+@keyframes badgePulse { 0% {transform:scale(1);} 100% {transform:scale(1.2);}}
 </style>
 </head>
 <body>
 <div id="game-container">
-<h1>🚀 Xran Ultimate Mini Game</h1>
-<p>XP: <span id="xp">0</span></p>
+<h1>🚀 Xran Ultimate Mini Game Deluxe</h1>
+<p>XP: <span id="xp">0</span> <span id="levelBadge" class="level-badge">Lv 1</span></p>
+<div id="xpBarContainer"><div id="xpBar"></div></div>
 <p>tXRAN: <span id="tXran">0</span></p>
 <p>Gems Left:</p>
 <div id="gemsDisplay"></div>
@@ -64,12 +69,15 @@ const faucetWebBtn=document.getElementById("faucetWebBtn");
 const faucetDiscordBtn=document.getElementById("faucetDiscordBtn");
 const buyGemsBtn=document.getElementById("buyGemsBtn");
 const leaderboardList=document.getElementById("leaderboardList");
+const xpBar=document.getElementById("xpBar");
+const levelBadge=document.getElementById("levelBadge");
 const clickSound=document.getElementById("clickSound");
 const xpSound=document.getElementById("xpSound");
 let leaderboard=JSON.parse(localStorage.getItem("leaderboard"))||{};
 
 // Helpers
 function getPlayerId(){let id=localStorage.getItem("playerId"); if(!id){id=prompt("Enter your player name","Player1"); localStorage.setItem("playerId",id);} return id;}
+function getLevel(){return Math.floor(xp/50)+1;}
 function getXPColor(xp){if(xp<50)return"orange"; if(xp<100)return"orangered"; return"red";}
 function showXPPopup(amount){
     xpSound.play();
@@ -91,9 +99,13 @@ function spawnParticle(x,y){
     document.body.appendChild(p);
     setTimeout(()=>p.remove(),800);
 }
-function updateXPDisplay(){xpDisplay.innerHTML=`<span class="xp-fire" style="color:${getXPColor(xp)}">🔥 ${xp}</span>`;}
+function updateXPDisplay(){
+    xpDisplay.innerHTML=`<span class="xp-fire" style="color:${getXPColor(xp)}">🔥 ${xp}</span>`;
+    xpBar.style.width=Math.min(xp,100)+"%";
+    levelBadge.textContent="Lv "+getLevel();
+}
 function updateGemsDisplay(){
-    let html=""; for(let i=0;i<gems;i++){html+=`<div class="gem"><img src="https://cdn-icons-png.flaticon.com/512/616/616408.png"/><span>tXRAN</span></div>`;}
+    let html=""; for(let i=0;i<gems;i++){html+=`<div class="gem"><img src="https://cdn-icons-png.flaticon.com/512/1828/1828884.png"/><span>tXRAN</span></div>`;}
     gemsDisplay.innerHTML=html;
     document.querySelectorAll('.gem').forEach((gem,i)=>{
         gem.onclick=()=>{
