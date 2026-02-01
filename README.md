@@ -1,2 +1,2 @@
 # Metaraden33.guthub.io
-Testnet game website (daily check-in &amp; mini game).
+An early testnet experiment focused on building real user participation through simple daily actions and interactive mini-games.
